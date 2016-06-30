@@ -124,7 +124,7 @@ upstream {{ $host }} {
 {{ $vhostCert := replace $vhostCert ".crt" "" -1 }}
 {{ $vhostCert := replace $vhostCert ".key" "" -1 }}
 
-{{/* Use the cert specifid on the container or fallback to the best vhost match */}}
+{{/* Use the cert specified on the container or fallback to the best vhost match */}}
 {{ $cert := (coalesce $certName $vhostCert) }}
 
 {{ $is_https := (and (ne $cert "") (exists (printf "/etc/nginx/certs/%s.crt" $cert)) (exists (printf "/etc/nginx/certs/%s.key" $cert))) }}
@@ -159,7 +159,9 @@ server {
 	ssl_dhparam {{ printf "/etc/nginx/certs/%s.dhparam.pem" $cert }};
 	{{ end }}
 
+	{{ if (ne $https_method "noredirect") }}
 	add_header Strict-Transport-Security "max-age=31536000";
+	{{ end }}
 
 	{{ if (exists (printf "/etc/nginx/vhost.d/%s" $host)) }}
 	include {{ printf "/etc/nginx/vhost.d/%s" $host }};
@@ -215,7 +217,7 @@ server {
 	server_name {{ $host }};
 	listen 443 ssl http2 {{ $default_server }};
 	access_log /var/log/nginx/access.log vhost;
-	return 503;
+	return 500;
 
 	ssl_certificate /etc/nginx/certs/default.crt;
 	ssl_certificate_key /etc/nginx/certs/default.key;
